@@ -1,10 +1,8 @@
 from PIL import Image
 from html2image import Html2Image
 from pythonWordArt import *
-from random import randint
+from random import randint, uniform
 import os
-import requests
-import re
 import html_parser
 
 
@@ -78,7 +76,7 @@ class Congratulation:
 
     def create_background(self, path=None):
         while True:
-            get_background()
+            html_parser.get_background()
             self.background = Image.open('sample.jpg')
             print(self.background.size)
             if self.background.size[0] >= self.background.size[1]:
@@ -158,7 +156,7 @@ class Congratulation:
         name_list = html_parser.get_category(self.text, count_png)
         for name in name_list:
             im = Image.open(name)
-            im = self.image_resize(im, scaling=2.5)
+            im = self.image_resize(im, scaling=uniform(2, 3))
             height = randint(min_indent,
                              self.background.size[1] - min_indent - im.size[1])
             weight = randint(min_indent,
@@ -175,7 +173,7 @@ if __name__ == '__main__':
     congr = Congratulation()
     try:
         congr.create_background()
-        congr.create_text('С днём отсутсвия горячей воды! С днём', size=80)
+        congr.create_text('С днём сытного кокоса!', size=80)
         congr.paste_add_png()
         congr.paste_text()
         congr.save_image()
