@@ -165,6 +165,13 @@ class Congratulation:
             self.background.paste(im, (weight, height), mask=im)
             im.close()
 
+    def create_image(self, text):
+        self.create_background()
+        self.create_text(text, size=80)
+        self.paste_add_png()
+        self.paste_text()
+
+
     def save_image(self, output='output.jpg'):
         self.background.save(output)
 
@@ -172,10 +179,7 @@ class Congratulation:
 if __name__ == '__main__':
     congr = Congratulation()
     try:
-        congr.create_background()
-        congr.create_text('С днём сытного кокоса!', size=80)
-        congr.paste_add_png()
-        congr.paste_text()
+        congr.create_image('С днём хорошего дня!')
         congr.save_image()
     finally:
         os.remove('sample.jpg')
