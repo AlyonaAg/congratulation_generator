@@ -19,7 +19,7 @@ def get_image_from_category(top_category, count):
 
     for _ in range(count):
         req2 = requests.get('http:' + find_image[randint(0, len(find_image) - 1)])
-        name = str(randint(0, 1000)) + '.png'
+        name = './temp/' + str(randint(0, 1000)) + '.png'
         name_list.append(name)
         with open(name, 'wb') as f:
             f.write(req2.content)
@@ -45,12 +45,12 @@ def get_category(text, count):
     top_category = sorted(ratio_dict.items(), key=lambda x: x[1], reverse=True)[0][0]
     return get_image_from_category(top_category, count)
 
+
 def get_background():
     print('get')
     reg = r"https:\/\/pixabay\.com\/get\/.*?\.jpg"
     req1 = requests.get('https://www.generatormix.com/random-image-generator')
-    with open('sample.jpg', 'wb') as f:
-        os.system('attrib +h sample.jpg')
+    with open('./temp/sample.jpg', 'wb') as f:
         req2 = re.findall(reg, req1.text)
         if len(req2):
             f.write(requests.get(req2[0]).content)

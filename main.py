@@ -4,6 +4,7 @@ from pythonWordArt import *
 from random import randint, uniform
 import os
 import html_parser
+import shutil
 
 
 def search_boundaries(data, size):
@@ -78,7 +79,7 @@ class Congratulation:
     def create_background(self, path=None):
         while True:
             html_parser.get_background()
-            self.background = Image.open('sample.jpg')
+            self.background = Image.open('./temp/sample.jpg')
             print(self.background.size)
             if self.background.size[0] >= self.background.size[1]:
                 if self.background.size[0] > 1280:
@@ -86,7 +87,6 @@ class Congratulation:
                     self.background.thumbnail(maxsize, Image.ANTIALIAS)
                 break
             self.background.close()
-            os.remove('sample.jpg')
 
     def create_text(self, text='С праздником!', style=None, size=100):
         self.text = text
@@ -95,7 +95,7 @@ class Congratulation:
             # бросить исключение потом
             exit(-1)
 
-        hti = Html2Image()
+        hti = Html2Image(output_path='./temp/')
         w = pyWordArt()
 
         if style is None:
@@ -105,13 +105,11 @@ class Congratulation:
         html_page = w.toHTML(text, w.Styles[style], size)
         #исключение на неизвестный стиль
 
-        with open('temp.html', 'w') as f:
-            os.system('attrib +h temp.html')
+        with open('./temp/temp.html', 'w') as f:
             f.write(html_page)
-        hti.screenshot(html_file='temp.html', save_as='temp.png')
-        os.system('attrib +h temp.png')
+        hti.screenshot(html_file='./temp/temp.html', save_as='temp.png')
 
-        self.textPNG = Image.open('temp.png')
+        self.textPNG = Image.open('./temp/temp.png')
         self.textPNG = self.textPNG.convert("RGBA")
         data = self.textPNG.getdata()
         self.textPNG.putdata(remove_background(data))
@@ -131,6 +129,7 @@ class Congratulation:
             im = im.resize((desired_side1, desired_side2), Image.ANTIALIAS)
         else:
             im = im.resize((desired_side2, desired_side1), Image.ANTIALIAS)
+
         return im
 
     def paste_text(self):
@@ -140,36 +139,31 @@ class Congratulation:
         weight = randint(self.min_indent,
                          self.background.size[0] - self.min_indent - self.textPNG.size[0])
 
-        try:
-            self.background.paste(self.textPNG, (weight, height), mask=self.textPNG)
-        except:
-            print('height: ', height)
-            print('weight: ', weight)
-            print('background: ', self.background)
-            print('textPNG: ', self.textPNG)
+        self.background.paste(self.textPNG, (weight, height), mask=self.textPNG)
 
     def paste_add_png(self):
-        count_png = randint(1, 3)
-
-        name_list = html_parser.get_category(self.text, count_png)
+        name_list = html_parser.get_category(self.text, count=randint(1, 3))
         for name in name_list:
             im = Image.open(name)
             im = self.image_resize(im, scaling=uniform(2, 3))
             height = randint(self.min_indent,
-                             self.background.size[1] - self.min_indent - im.size[1])
+                             self.background.size[1] - im.size[1])
             weight = randint(self.min_indent,
-                             self.background.size[0] - self.min_indent - im.size[0])
+                             self.background.size[0] - im.size[0])
 
             self.background.paste(im, (weight, height), mask=im)
             im.close()
 
     def create_image(self, text, min_indent=30):
+        if os.path.exists('./temp'):
+            shutil.rmtree('./temp')
+        os.mkdir('./temp')
+        os.system('attrib +h ./temp')
         self.min_indent = min_indent
         self.create_background()
         self.create_text(text, size=80)
         self.paste_add_png()
         self.paste_text()
-
 
     def save_image(self, output='output.jpg'):
         self.background.save(output)
@@ -181,6 +175,4 @@ if __name__ == '__main__':
         congr.create_image('С днём хорошего дня!')
         congr.save_image()
     finally:
-        os.remove('sample.jpg')
-        os.remove('temp.html')
-        os.remove('temp.png')
+        shutil.rmtree('./temp')
