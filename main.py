@@ -46,6 +46,7 @@ class Congratulation:
         self.background = None
         self.textPNG = None
         self.text = ''
+        self.min_indent = 30
         self.Style = {
             'outline': 0,
             'up': 1,
@@ -133,13 +134,11 @@ class Congratulation:
         return im
 
     def paste_text(self):
-        min_indent = 30
-
         self.textPNG = self.image_resize(self.textPNG, scaling=1.1)
-        height = randint(min_indent,
-                         self.background.size[1] - min_indent - self.textPNG.size[1])
-        weight = randint(min_indent,
-                         self.background.size[0] - min_indent - self.textPNG.size[0])
+        height = randint(self.min_indent,
+                         self.background.size[1] - self.min_indent - self.textPNG.size[1])
+        weight = randint(self.min_indent,
+                         self.background.size[0] - self.min_indent - self.textPNG.size[0])
 
         try:
             self.background.paste(self.textPNG, (weight, height), mask=self.textPNG)
@@ -150,22 +149,22 @@ class Congratulation:
             print('textPNG: ', self.textPNG)
 
     def paste_add_png(self):
-        min_indent = 30
-        count_png = randint(1, 4)
+        count_png = randint(1, 3)
 
         name_list = html_parser.get_category(self.text, count_png)
         for name in name_list:
             im = Image.open(name)
             im = self.image_resize(im, scaling=uniform(2, 3))
-            height = randint(min_indent,
-                             self.background.size[1] - min_indent - im.size[1])
-            weight = randint(min_indent,
-                             self.background.size[0] - min_indent - im.size[0])
+            height = randint(self.min_indent,
+                             self.background.size[1] - self.min_indent - im.size[1])
+            weight = randint(self.min_indent,
+                             self.background.size[0] - self.min_indent - im.size[0])
 
             self.background.paste(im, (weight, height), mask=im)
             im.close()
 
-    def create_image(self, text):
+    def create_image(self, text, min_indent=30):
+        self.min_indent = min_indent
         self.create_background()
         self.create_text(text, size=80)
         self.paste_add_png()
