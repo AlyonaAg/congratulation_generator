@@ -214,6 +214,7 @@ class Congratulation:
             self.word_dict[category[1].lower()] = category[0]
             compare(text, category[1])
         top_category = sorted(self.ratio_dict.items(), key=lambda x: x[1], reverse=True)[:3]
+        print(top_category)
         return self.get_image_from_category(top_category)
 
     def get_background(self):
@@ -235,7 +236,7 @@ class Congratulation:
 if __name__ == '__main__':
     congr = Congratulation()
     try:
-        congr.create_image('С днём Серёжи Ветрова!', size=80)
+        congr.create_image('С 28 февраля!', size=80)
         congr.save_image()
     finally:
         shutil.rmtree('./temp')
