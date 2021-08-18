@@ -1,10 +1,8 @@
 from PIL import Image
 from html2image import Html2Image
 from pythonWordArt import *
-from random import randint
+from random import randint, uniform
 import os
-import requests
-import re
 import html_parser
 
 
@@ -43,27 +41,12 @@ def remove_background(data):
     return new_data
 
 
-def get_background():
-    print('get')
-    reg = r"https:\/\/pixabay\.com\/get\/.*?\.jpg"
-    req1 = requests.get('https://www.generatormix.com/random-image-generator')
-    with open('sample.jpg', 'wb') as f:
-        os.system('attrib +h sample.jpg')
-        req2 = re.findall(reg, req1.text)
-        if len(req2):
-            f.write(requests.get(req2[0]).content)
-        else:
-            # бросить исключение
-            print('не подключились чото')
-            # удалить файлы
-            exit(-1)
-
-
 class Congratulation:
     def __init__(self):
         self.background = None
         self.textPNG = None
         self.text = ''
+        self.min_indent = 30
         self.Style = {
             'outline': 0,
             'up': 1,
@@ -94,7 +77,7 @@ class Congratulation:
 
     def create_background(self, path=None):
         while True:
-            get_background()
+            html_parser.get_background()
             self.background = Image.open('sample.jpg')
             print(self.background.size)
             if self.background.size[0] >= self.background.size[1]:
@@ -134,13 +117,28 @@ class Congratulation:
         self.textPNG.putdata(remove_background(data))
         self.textPNG = self.textPNG.crop(search_boundaries(data, self.textPNG.size))
 
-    def paste_text(self):
-        min_indent = 30
+    def image_resize(self, im, scaling=3):
+        if im.size[0] > im.size[1]:
+            side_scaling = 0
+        else:
+            side_scaling = 1
 
-        height = randint(min_indent,
-                         self.background.size[1] - min_indent - self.textPNG.size[1])
-        weight = randint(min_indent,
-                         self.background.size[0] - min_indent - self.textPNG.size[0])
+        desired_side1 = int(self.background.size[side_scaling] // scaling)
+        percent = (desired_side1 / float(im.size[side_scaling]))
+        desired_side2 = int((float(im.size[1 - side_scaling]) * float(percent)))
+
+        if side_scaling == 0:
+            im = im.resize((desired_side1, desired_side2), Image.ANTIALIAS)
+        else:
+            im = im.resize((desired_side2, desired_side1), Image.ANTIALIAS)
+        return im
+
+    def paste_text(self):
+        self.textPNG = self.image_resize(self.textPNG, scaling=1.1)
+        height = randint(self.min_indent,
+                         self.background.size[1] - self.min_indent - self.textPNG.size[1])
+        weight = randint(self.min_indent,
+                         self.background.size[0] - self.min_indent - self.textPNG.size[0])
 
         try:
             self.background.paste(self.textPNG, (weight, height), mask=self.textPNG)
@@ -151,26 +149,27 @@ class Congratulation:
             print('textPNG: ', self.textPNG)
 
     def paste_add_png(self):
-        min_indent = 30
-        count_png = randint(1, 4)
+        count_png = randint(1, 3)
 
         name_list = html_parser.get_category(self.text, count_png)
         for name in name_list:
             im = Image.open(name)
-
-            basewidth = self.background.size[0] // 3
-            wpercent = (basewidth / float(im.size[0]))
-            hsize = int((float(im.size[1]) * float(wpercent)))
-            im = im.resize((basewidth, hsize), Image.ANTIALIAS)
-
-            height = randint(min_indent,
-                             self.background.size[1] - min_indent - im.size[1])
-            weight = randint(min_indent,
-                             self.background.size[0] - min_indent - im.size[0])
-
+            im = self.image_resize(im, scaling=uniform(2, 3))
+            height = randint(self.min_indent,
+                             self.background.size[1] - self.min_indent - im.size[1])
+            weight = randint(self.min_indent,
+                             self.background.size[0] - self.min_indent - im.size[0])
 
             self.background.paste(im, (weight, height), mask=im)
             im.close()
+
+    def create_image(self, text, min_indent=30):
+        self.min_indent = min_indent
+        self.create_background()
+        self.create_text(text, size=80)
+        self.paste_add_png()
+        self.paste_text()
+
 
     def save_image(self, output='output.jpg'):
         self.background.save(output)
@@ -179,10 +178,7 @@ class Congratulation:
 if __name__ == '__main__':
     congr = Congratulation()
     try:
-        congr.create_background()
-        congr.create_text('С днём потраченных впустую гладких ног!', size=80)
-        congr.paste_add_png()
-        congr.paste_text()
+        congr.create_image('С днём хорошего дня!')
         congr.save_image()
     finally:
         os.remove('sample.jpg')
