@@ -134,6 +134,21 @@ class Congratulation:
         self.textPNG.putdata(remove_background(data))
         self.textPNG = self.textPNG.crop(search_boundaries(data, self.textPNG.size))
 
+    def image_resize(self, im, scaling=3):
+        if im.size[0] > im.size[1]:
+            side_scaling = 0
+        else:
+            side_scaling = 1
+
+        desired_side1 = self.background.size[side_scaling] // scaling
+        percent = (desired_side1 / float(im.size[side_scaling]))
+        desired_side2 = int((float(im.size[1 - side_scaling]) * float(percent)))
+
+        if side_scaling == 0:
+            im = im.resize((desired_side1, desired_side2), Image.ANTIALIAS)
+        else:
+            im = im.resize((desired_side2, desired_side1), Image.ANTIALIAS)
+
     def paste_text(self):
         min_indent = 30
 
