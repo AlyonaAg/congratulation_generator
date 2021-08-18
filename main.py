@@ -2,8 +2,11 @@ from PIL import Image
 from html2image import Html2Image
 from pythonWordArt import *
 from random import randint, uniform
+import shutil
+import re
+import requests
+import difflib
 import os
-import html_parser
 
 
 def search_boundaries(data, size):
@@ -47,6 +50,11 @@ class Congratulation:
         self.textPNG = None
         self.text = ''
         self.min_indent = 30
+        self.wordArt = pyWordArt()
+        self.word_dict = {}
+        self.ratio_dict = {}
+        self.url_png = 'http://imgpng.ru'
+
         self.Style = {
             'outline': 0,
             'up': 1,
@@ -77,60 +85,54 @@ class Congratulation:
 
     def create_background(self, path=None):
         while True:
-            html_parser.get_background()
-            self.background = Image.open('sample.jpg')
-            print(self.background.size)
+            self.get_background()
+            self.background = Image.open('./temp/sample.jpg')
             if self.background.size[0] >= self.background.size[1]:
                 if self.background.size[0] > 1280:
                     maxsize = (1280, 1280)
                     self.background.thumbnail(maxsize, Image.ANTIALIAS)
                 break
             self.background.close()
-            os.remove('sample.jpg')
 
-    def create_text(self, text='С праздником!', style=None, size=100):
+    def create_text(self, text='С праздником!', size=100, filename='temp.png'):
         self.text = text
         if len(text) > 50:
-            print('Текст слишком длинный (>50).')
-            # бросить исключение потом
+            self.exception(type_except='longtext')
             exit(-1)
 
-        hti = Html2Image()
-        w = pyWordArt()
+        hti = Html2Image(output_path='./temp/')
 
-        if style is None:
-            number_style = randint(0, len(self.Style) - 1)
-            style = list(self.Style.keys())[number_style]
+        number_style = randint(0, len(self.Style) - 1)
+        style = list(self.Style.keys())[number_style]
 
-        html_page = w.toHTML(text, w.Styles[style], size)
-        #исключение на неизвестный стиль
+        html_page = self.wordArt.toHTML(text, self.wordArt.Styles[style], size)
 
-        with open('temp.html', 'w') as f:
-            os.system('attrib +h temp.html')
+        with open('./temp/temp.html', 'w') as f:
             f.write(html_page)
-        hti.screenshot(html_file='temp.html', save_as='temp.png')
-        os.system('attrib +h temp.png')
+        hti.screenshot(html_file='./temp/temp.html', save_as=filename)
 
-        self.textPNG = Image.open('temp.png')
+        self.textPNG = Image.open('./temp/' + filename)
         self.textPNG = self.textPNG.convert("RGBA")
         data = self.textPNG.getdata()
         self.textPNG.putdata(remove_background(data))
         self.textPNG = self.textPNG.crop(search_boundaries(data, self.textPNG.size))
 
     def image_resize(self, im, scaling=3):
-        if im.size[0] > im.size[1]:
-            side_scaling = 0
-        else:
-            side_scaling = 1
+        side_scaling = 0 if im.size[0] > im.size[1] else 1
 
-        desired_side1 = int(self.background.size[side_scaling] // scaling)
-        percent = (desired_side1 / float(im.size[side_scaling]))
-        desired_side2 = int((float(im.size[1 - side_scaling]) * float(percent)))
+        try:
+            desired_side1 = int(self.background.size[side_scaling] // scaling)
+            percent = (desired_side1 / float(im.size[side_scaling]))
+            desired_side2 = int((float(im.size[1 - side_scaling]) * float(percent)))
+        except ZeroDivisionError:
+            self.exception()
+            exit(-1)
 
         if side_scaling == 0:
             im = im.resize((desired_side1, desired_side2), Image.ANTIALIAS)
         else:
             im = im.resize((desired_side2, desired_side1), Image.ANTIALIAS)
+
         return im
 
     def paste_text(self):
@@ -140,36 +142,92 @@ class Congratulation:
         weight = randint(self.min_indent,
                          self.background.size[0] - self.min_indent - self.textPNG.size[0])
 
-        try:
-            self.background.paste(self.textPNG, (weight, height), mask=self.textPNG)
-        except:
-            print('height: ', height)
-            print('weight: ', weight)
-            print('background: ', self.background)
-            print('textPNG: ', self.textPNG)
+        self.background.paste(self.textPNG, (weight, height), mask=self.textPNG)
 
     def paste_add_png(self):
-        count_png = randint(1, 3)
-
-        name_list = html_parser.get_category(self.text, count_png)
+        name_list = self.get_category(self.text, count=randint(1, 3))
         for name in name_list:
             im = Image.open(name)
             im = self.image_resize(im, scaling=uniform(2, 3))
             height = randint(self.min_indent,
-                             self.background.size[1] - self.min_indent - im.size[1])
+                             self.background.size[1] - im.size[1])
             weight = randint(self.min_indent,
-                             self.background.size[0] - self.min_indent - im.size[0])
+                             self.background.size[0] - im.size[0])
 
-            self.background.paste(im, (weight, height), mask=im)
+            try:
+                self.background.paste(im, (weight, height), mask=im)
+            except ValueError:
+                print('bad image.... skip...')
             im.close()
 
-    def create_image(self, text, min_indent=30):
+    def create_image(self, text, min_indent=30, size=80):
+        if os.path.exists('./temp'):
+            shutil.rmtree('./temp')
+        os.mkdir('./temp')
+        os.system('attrib +h ./temp')
         self.min_indent = min_indent
         self.create_background()
-        self.create_text(text, size=80)
+        self.create_text(text, size=size)
         self.paste_add_png()
         self.paste_text()
 
+    def exception(self, type_except='unknown'):
+        if type_except == 'longtext':
+            path = './exception/long text/'
+        elif type_except == 'connect':
+            path = './exception/connect/'
+        else:
+            path = './exception/unknown bug/'
+
+        files = os.listdir(path=path)
+        self.background = Image.open(path + files[randint(0, len(files) - 1)])
+        self.save_image()
+
+    def get_image_from_category(self, top_category, count):
+        reg = r"src=\"(//pngimg\.com/uploads[\/\w\.]+)"
+        name_list = []
+        req1 = requests.get(self.url_png + self.word_dict[top_category]).text
+        find_image = re.findall(reg, req1)
+
+        for _ in range(count):
+            req2 = requests.get('http:' + find_image[randint(0, len(find_image) - 1)])
+            name = './temp/' + str(randint(0, 1000)) + '.png'
+            name_list.append(name)
+            with open(name, 'wb') as f:
+                f.write(req2.content)
+        return name_list
+
+    def get_category(self, text, count):
+        def compare(s1, s2):
+            s1 = s1.lower().split(" ")
+            s2 = s2.lower()
+            self.ratio_dict[s2] = max(difflib.SequenceMatcher(None, part_s1, s2).ratio()
+                                 for part_s1 in s1 if len(part_s1) > 2)
+
+        reg = r"<a href=\"(\/img\/\w+\/\w+)\">([\w,\s]+)<\/a>"
+        req = requests.get(self.url_png).text
+        find_category = re.findall(reg, req)
+        if len(find_category) == 0:
+            self.exception('connect')
+            exit(-1)
+
+        for category in find_category:
+            self.word_dict[category[1].lower()] = category[0]
+            compare(text, category[1])
+        top_category = sorted(self.ratio_dict.items(), key=lambda x: x[1], reverse=True)[0][0]
+        return self.get_image_from_category(top_category, count)
+
+    def get_background(self):
+        print('get')
+        reg = r"https:\/\/pixabay\.com\/get\/.*?\.jpg"
+        req1 = requests.get('https://www.generatormix.com/random-image-generator')
+        with open('./temp/sample.jpg', 'wb') as f:
+            req2 = re.findall(reg, req1.text)
+            if len(req2):
+                f.write(requests.get(req2[0]).content)
+            else:
+                self.exception('connect')
+                exit(-1)
 
     def save_image(self, output='output.jpg'):
         self.background.save(output)
@@ -178,9 +236,7 @@ class Congratulation:
 if __name__ == '__main__':
     congr = Congratulation()
     try:
-        congr.create_image('С днём хорошего дня!')
+        congr.create_image('С днём программиста!', size=80)
         congr.save_image()
     finally:
-        os.remove('sample.jpg')
-        os.remove('temp.html')
-        os.remove('temp.png')
+        shutil.rmtree('./temp')
