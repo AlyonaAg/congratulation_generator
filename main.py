@@ -87,7 +87,6 @@ class Congratulation:
         while True:
             self.get_background()
             self.background = Image.open('./temp/sample.jpg')
-            print(self.background.size)
             if self.background.size[0] >= self.background.size[1]:
                 if self.background.size[0] > 1280:
                     maxsize = (1280, 1280)
@@ -95,7 +94,7 @@ class Congratulation:
                 break
             self.background.close()
 
-    def create_text(self, text='С праздником!', style=None, size=100, filename='temp.png'):
+    def create_text(self, text='С праздником!', size=100, filename='temp.png'):
         self.text = text
         if len(text) > 50:
             self.exception(type_except='longtext')
@@ -103,15 +102,10 @@ class Congratulation:
 
         hti = Html2Image(output_path='./temp/')
 
-        if style is None:
-            number_style = randint(0, len(self.Style) - 1)
-            style = list(self.Style.keys())[number_style]
+        number_style = randint(0, len(self.Style) - 1)
+        style = list(self.Style.keys())[number_style]
 
-        try:
-            html_page = self.wordArt.toHTML(text, self.wordArt.Styles[style], size)
-        except:
-            self.exception(type_except='style')
-            exit(-1)
+        html_page = self.wordArt.toHTML(text, self.wordArt.Styles[style], size)
 
         with open('./temp/temp.html', 'w') as f:
             f.write(html_page)
@@ -124,10 +118,7 @@ class Congratulation:
         self.textPNG = self.textPNG.crop(search_boundaries(data, self.textPNG.size))
 
     def image_resize(self, im, scaling=3):
-        if im.size[0] > im.size[1]:
-            side_scaling = 0
-        else:
-            side_scaling = 1
+        side_scaling = 0 if im.size[0] > im.size[1] else 1
 
         try:
             desired_side1 = int(self.background.size[side_scaling] // scaling)
@@ -167,7 +158,6 @@ class Congratulation:
                 self.background.paste(im, (weight, height), mask=im)
             except ValueError:
                 print('bad image.... skip...')
-
             im.close()
 
     def create_image(self, text, min_indent=30, size=80):
@@ -181,16 +171,11 @@ class Congratulation:
         self.paste_add_png()
         self.paste_text()
 
-    def save_image(self, output='output.jpg'):
-        self.background.save(output)
-
     def exception(self, type_except='unknown'):
         if type_except == 'longtext':
             path = './exception/long text/'
         elif type_except == 'connect':
             path = './exception/connect/'
-        elif type_except == 'style':
-            path = './exception/style/'
         else:
             path = './exception/unknown bug/'
 
@@ -244,11 +229,14 @@ class Congratulation:
                 self.exception('connect')
                 exit(-1)
 
+    def save_image(self, output='output.jpg'):
+        self.background.save(output)
+
 
 if __name__ == '__main__':
     congr = Congratulation()
     try:
-        congr.create_image('С днём программиста!', size=70)
+        congr.create_image('С днём программиста!', size=80)
         congr.save_image()
     finally:
         shutil.rmtree('./temp')
