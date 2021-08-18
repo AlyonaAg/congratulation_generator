@@ -1,6 +1,7 @@
 import re
 import requests
 import difflib
+import os
 from random import randint
 
 word_dict = {}
@@ -43,3 +44,18 @@ def get_category(text, count):
         compare(text, category[1])
     top_category = sorted(ratio_dict.items(), key=lambda x: x[1], reverse=True)[0][0]
     return get_image_from_category(top_category, count)
+
+def get_background():
+    print('get')
+    reg = r"https:\/\/pixabay\.com\/get\/.*?\.jpg"
+    req1 = requests.get('https://www.generatormix.com/random-image-generator')
+    with open('sample.jpg', 'wb') as f:
+        os.system('attrib +h sample.jpg')
+        req2 = re.findall(reg, req1.text)
+        if len(req2):
+            f.write(requests.get(req2[0]).content)
+        else:
+            # бросить исключение
+            print('не подключились чото')
+            # удалить файлы
+            exit(-1)

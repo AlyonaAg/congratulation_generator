@@ -43,22 +43,6 @@ def remove_background(data):
     return new_data
 
 
-def get_background():
-    print('get')
-    reg = r"https:\/\/pixabay\.com\/get\/.*?\.jpg"
-    req1 = requests.get('https://www.generatormix.com/random-image-generator')
-    with open('sample.jpg', 'wb') as f:
-        os.system('attrib +h sample.jpg')
-        req2 = re.findall(reg, req1.text)
-        if len(req2):
-            f.write(requests.get(req2[0]).content)
-        else:
-            # бросить исключение
-            print('не подключились чото')
-            # удалить файлы
-            exit(-1)
-
-
 class Congratulation:
     def __init__(self):
         self.background = None
@@ -140,7 +124,7 @@ class Congratulation:
         else:
             side_scaling = 1
 
-        desired_side1 = self.background.size[side_scaling] // scaling
+        desired_side1 = int(self.background.size[side_scaling] // scaling)
         percent = (desired_side1 / float(im.size[side_scaling]))
         desired_side2 = int((float(im.size[1 - side_scaling]) * float(percent)))
 
@@ -148,10 +132,12 @@ class Congratulation:
             im = im.resize((desired_side1, desired_side2), Image.ANTIALIAS)
         else:
             im = im.resize((desired_side2, desired_side1), Image.ANTIALIAS)
+        return im
 
     def paste_text(self):
         min_indent = 30
 
+        self.textPNG = self.image_resize(self.textPNG, scaling=1.1)
         height = randint(min_indent,
                          self.background.size[1] - min_indent - self.textPNG.size[1])
         weight = randint(min_indent,
@@ -172,17 +158,11 @@ class Congratulation:
         name_list = html_parser.get_category(self.text, count_png)
         for name in name_list:
             im = Image.open(name)
-
-            basewidth = self.background.size[0] // 3
-            wpercent = (basewidth / float(im.size[0]))
-            hsize = int((float(im.size[1]) * float(wpercent)))
-            im = im.resize((basewidth, hsize), Image.ANTIALIAS)
-
+            im = self.image_resize(im, scaling=2.5)
             height = randint(min_indent,
                              self.background.size[1] - min_indent - im.size[1])
             weight = randint(min_indent,
                              self.background.size[0] - min_indent - im.size[0])
-
 
             self.background.paste(im, (weight, height), mask=im)
             im.close()
@@ -195,7 +175,7 @@ if __name__ == '__main__':
     congr = Congratulation()
     try:
         congr.create_background()
-        congr.create_text('С днём потраченных впустую гладких ног!', size=80)
+        congr.create_text('С днём отсутсвия горячей воды! С днём', size=80)
         congr.paste_add_png()
         congr.paste_text()
         congr.save_image()
