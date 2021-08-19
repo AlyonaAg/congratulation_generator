@@ -153,7 +153,7 @@ class Congratulation:
             try:
                 self.background.paste(im, (weight, height), mask=im)
             except ValueError:
-                print('bad image.... skip...')
+                pass
             im.close()
 
     def create_image(self, text, min_indent=30, size=80):
@@ -214,11 +214,10 @@ class Congratulation:
             self.word_dict[category[1].lower()] = category[0]
             compare(text, category[1])
         top_category = sorted(self.ratio_dict.items(), key=lambda x: x[1], reverse=True)[:3]
-        print(top_category)
+        #print(top_category)
         return self.get_image_from_category(top_category)
 
     def get_background(self):
-        print('get')
         reg = r"https:\/\/pixabay\.com\/get\/.*?\.jpg"
         req1 = requests.get('https://www.generatormix.com/random-image-generator')
         with open('./temp/sample.jpg', 'wb') as f:
