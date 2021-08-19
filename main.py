@@ -233,7 +233,6 @@ class Congratulation:
 
     def finality(self):
         shutil.rmtree('./temp')
-        self.textPNG.close()
         self.background.close()
 
 

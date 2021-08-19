@@ -1,0 +1,4 @@
+Pillow==8.3.1
+pythonWordArt==0.9
+requests==2.26.0
+webkit2png==0.8.2
