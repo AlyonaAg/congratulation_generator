@@ -2,6 +2,7 @@ from PIL import Image
 from html2image import Html2Image
 from pythonWordArt import *
 from random import randint, uniform
+from sys import argv
 import shutil
 import re
 import requests
@@ -98,7 +99,6 @@ class Congratulation:
         self.text = text
         if len(text) > 50:
             self.exception(type_except='longtext')
-            exit(-1)
 
         hti = Html2Image(output_path='./temp/')
         style = list(self.Style.keys())[randint(0, len(self.Style) - 1)]
@@ -123,7 +123,6 @@ class Congratulation:
             desired_side2 = int((float(im.size[1 - side_scaling]) * float(percent)))
         except ZeroDivisionError:
             self.exception()
-            exit(-1)
 
         if side_scaling == 0:
             im = im.resize((desired_side1, desired_side2), Image.ANTIALIAS)
@@ -179,6 +178,8 @@ class Congratulation:
         files = os.listdir(path=path)
         self.background = Image.open(path + files[randint(0, len(files) - 1)])
         self.save_image()
+        self.finality()
+        exit(-1)
 
     def get_image_from_category(self, top_category):
         reg = r"src=\"(//pngimg\.com/uploads[\/\w\.]+)"
@@ -208,7 +209,6 @@ class Congratulation:
         find_category = re.findall(reg, req)
         if len(find_category) == 0:
             self.exception('connect')
-            exit(-1)
 
         for category in find_category:
             self.word_dict[category[1].lower()] = category[0]
@@ -227,16 +227,23 @@ class Congratulation:
                 f.write(requests.get(req2[0]).content)
             else:
                 self.exception('connect')
-                exit(-1)
 
     def save_image(self, output='output.jpg'):
         self.background.save(output)
 
+    def finality(self):
+        shutil.rmtree('./temp')
+        self.textPNG.close()
+        self.background.close()
+
 
 if __name__ == '__main__':
-    congr = Congratulation()
-    try:
-        congr.create_image('С 28 февраля!', size=80)
-        congr.save_image()
-    finally:
-        shutil.rmtree('./temp')
+    if len(argv) > 1:
+        congr = Congratulation()
+        try:
+            congr.create_image(' '.join(argv[1:]).strip("\'\""), size=80)
+            congr.save_image()
+        except:
+            congr.exception()
+        finally:
+            congr.finality()
