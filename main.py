@@ -232,7 +232,8 @@ class Congratulation:
         self.background.save(output)
 
     def finality(self):
-        shutil.rmtree('./temp')
+        if os.path.exists('./temp'):
+            shutil.rmtree('./temp')
         self.background.close()
 
 
