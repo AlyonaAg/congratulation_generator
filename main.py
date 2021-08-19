@@ -101,10 +101,7 @@ class Congratulation:
             exit(-1)
 
         hti = Html2Image(output_path='./temp/')
-
-        number_style = randint(0, len(self.Style) - 1)
-        style = list(self.Style.keys())[number_style]
-
+        style = list(self.Style.keys())[randint(0, len(self.Style) - 1)]
         html_page = self.wordArt.toHTML(text, self.wordArt.Styles[style], size)
 
         with open('./temp/temp.html', 'w') as f:
@@ -145,14 +142,14 @@ class Congratulation:
         self.background.paste(self.textPNG, (weight, height), mask=self.textPNG)
 
     def paste_add_png(self):
-        name_list = self.get_category(self.text, count=randint(1, 3))
+        name_list = self.get_category(self.text)
         for name in name_list:
             im = Image.open(name)
             im = self.image_resize(im, scaling=uniform(2, 3))
             height = randint(self.min_indent,
-                             self.background.size[1] - im.size[1])
+                             self.background.size[1] - self.min_indent * 2)
             weight = randint(self.min_indent,
-                             self.background.size[0] - im.size[0])
+                             self.background.size[0] - self.min_indent * 2)
 
             try:
                 self.background.paste(im, (weight, height), mask=im)
@@ -183,21 +180,23 @@ class Congratulation:
         self.background = Image.open(path + files[randint(0, len(files) - 1)])
         self.save_image()
 
-    def get_image_from_category(self, top_category, count):
+    def get_image_from_category(self, top_category):
         reg = r"src=\"(//pngimg\.com/uploads[\/\w\.]+)"
         name_list = []
-        req1 = requests.get(self.url_png + self.word_dict[top_category]).text
-        find_image = re.findall(reg, req1)
 
-        for _ in range(count):
-            req2 = requests.get('http:' + find_image[randint(0, len(find_image) - 1)])
-            name = './temp/' + str(randint(0, 1000)) + '.png'
-            name_list.append(name)
-            with open(name, 'wb') as f:
-                f.write(req2.content)
+        for category in top_category:
+            req1 = requests.get(self.url_png + self.word_dict[category[0]]).text
+            find_image = re.findall(reg, req1)
+
+            for _ in range(randint(0, 3)):
+                req2 = requests.get('http:' + find_image[randint(0, len(find_image) - 1)])
+                name = './temp/' + str(randint(0, 1000)) + '.png'
+                name_list.append(name)
+                with open(name, 'wb') as f:
+                    f.write(req2.content)
         return name_list
 
-    def get_category(self, text, count):
+    def get_category(self, text):
         def compare(s1, s2):
             s1 = s1.lower().split(" ")
             s2 = s2.lower()
@@ -214,8 +213,9 @@ class Congratulation:
         for category in find_category:
             self.word_dict[category[1].lower()] = category[0]
             compare(text, category[1])
-        top_category = sorted(self.ratio_dict.items(), key=lambda x: x[1], reverse=True)[0][0]
-        return self.get_image_from_category(top_category, count)
+        top_category = sorted(self.ratio_dict.items(), key=lambda x: x[1], reverse=True)[:3]
+        print(top_category)
+        return self.get_image_from_category(top_category)
 
     def get_background(self):
         print('get')
@@ -236,7 +236,7 @@ class Congratulation:
 if __name__ == '__main__':
     congr = Congratulation()
     try:
-        congr.create_image('С днём программиста!', size=80)
+        congr.create_image('С 28 февраля!', size=80)
         congr.save_image()
     finally:
         shutil.rmtree('./temp')
