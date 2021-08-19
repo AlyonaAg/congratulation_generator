@@ -2,6 +2,7 @@ from PIL import Image
 from html2image import Html2Image
 from pythonWordArt import *
 from random import randint, uniform
+from sys import argv
 import shutil
 import re
 import requests
@@ -237,11 +238,12 @@ class Congratulation:
 
 
 if __name__ == '__main__':
-    congr = Congratulation()
-    try:
-        congr.create_image('С 28 мая!', size=80)
-        congr.save_image()
-    except:
-        congr.exception()
-    finally:
-        congr.finality()
+    if len(argv) > 1:
+        congr = Congratulation()
+        try:
+            congr.create_image(' '.join(argv[1:]).strip("\'\""), size=80)
+            congr.save_image()
+        except:
+            congr.exception()
+        finally:
+            congr.finality()
